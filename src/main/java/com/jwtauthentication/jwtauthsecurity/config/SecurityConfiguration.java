@@ -31,7 +31,11 @@ public class SecurityConfiguration {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth->auth.requestMatchers("/auth/**").permitAll().requestMatchers("/users/me").authenticated().anyRequest().authenticated())
+                .authorizeHttpRequests(auth->auth
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/upload/**","/download/**").permitAll()
+                        .requestMatchers("/users/me","/users/").authenticated()
+                        .anyRequest().authenticated())
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

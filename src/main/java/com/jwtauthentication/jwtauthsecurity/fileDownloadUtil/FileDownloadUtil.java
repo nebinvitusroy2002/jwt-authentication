@@ -2,6 +2,7 @@ package com.jwtauthentication.jwtauthsecurity.fileDownloadUtil;
 
 
 import org.springframework.core.io.UrlResource;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -9,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 
+@Component
 public class FileDownloadUtil {
     private Path foundFile;
     public UrlResource getFileAsResource(String fileCode) throws IOException{
