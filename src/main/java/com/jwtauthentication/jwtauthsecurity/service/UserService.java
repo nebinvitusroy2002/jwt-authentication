@@ -1,5 +1,6 @@
 package com.jwtauthentication.jwtauthsecurity.service;
 
+import com.jwtauthentication.jwtauthsecurity.error.UserServiceException;
 import com.jwtauthentication.jwtauthsecurity.model.User;
 import com.jwtauthentication.jwtauthsecurity.repository.UserRepository;
 import org.springframework.security.core.Authentication;
@@ -21,9 +22,9 @@ public class UserService {
     public User getAuthenticatedUser(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated() || authentication.getPrincipal().equals("anonymousUser")){
-            throw new RuntimeException("No authenticated user found");
+            throw new UserServiceException("No authenticated user found");
         }
         String userEmail = authentication.getName();
-        return userRepository.findByEmail(userEmail).orElseThrow(()->new RuntimeException("Authenticated user not found in database"));
+        return userRepository.findByEmail(userEmail).orElseThrow(()->new UserServiceException("Authenticated user not found in database"));
     }
 }

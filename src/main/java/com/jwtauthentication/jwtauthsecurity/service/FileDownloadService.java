@@ -1,5 +1,6 @@
 package com.jwtauthentication.jwtauthsecurity.service;
 
+import com.jwtauthentication.jwtauthsecurity.error.ResourceNotFoundException;
 import com.jwtauthentication.jwtauthsecurity.fileDownloadUtil.FileDownloadUtil;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -18,18 +19,12 @@ public class FileDownloadService {
     public FileDownloadService(FileDownloadUtil fileDownloadUtil){
         this.fileDownloadUtil = fileDownloadUtil;
     }
-//    public Resource getFileAsResource(String fileCode) throws IOException {
-//        try{
-//            return fileDownloadUtil.getFileAsResource(fileCode);
-//        } catch (IOException e) {
-//            throw new RuntimeException("File Download failed",e);
-//        }
-//    }
-    public ResponseEntity<?> downloadFile(String fileCode) throws IOException {
+
+    public ResponseEntity<Resource> downloadFile(String fileCode) throws IOException {
         try {
             Resource resource = fileDownloadUtil.getFileAsResource(fileCode);
             if (resource == null) {
-                return new ResponseEntity<>("File not found", HttpStatus.NOT_FOUND);
+                throw new ResourceNotFoundException("File not found with code: " + fileCode);
             }
             String contentType = "application/octet-stream";
             String headerValue = "attachment; filename=\"" + resource.getFilename() + "\"";
@@ -39,7 +34,7 @@ public class FileDownloadService {
                     .header(HttpHeaders.CONTENT_DISPOSITION, headerValue)
                     .body(resource);
         }catch (IOException e){
-            return new ResponseEntity<>("Error while downloading the file",HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new IOException("Error while downloading the file: " + e.getMessage(), e);
         }
     }
 }
