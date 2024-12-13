@@ -1,6 +1,6 @@
 package com.jwtauthentication.jwtauthsecurity.controller;
 
-import com.jwtauthentication.jwtauthsecurity.service.FileDownloadService;
+import com.jwtauthentication.jwtauthsecurity.service.filedownload.FileDownloadService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
