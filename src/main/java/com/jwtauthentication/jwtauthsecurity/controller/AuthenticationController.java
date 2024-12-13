@@ -4,13 +4,21 @@ import com.jwtauthentication.jwtauthsecurity.dto.LoginUserDto;
 import com.jwtauthentication.jwtauthsecurity.dto.RegisterUserDto;
 import com.jwtauthentication.jwtauthsecurity.model.User;
 import com.jwtauthentication.jwtauthsecurity.response.LoginResponse;
-import com.jwtauthentication.jwtauthsecurity.service.AuthenticationService;
-import com.jwtauthentication.jwtauthsecurity.service.JwtService;
+import com.jwtauthentication.jwtauthsecurity.service.authentication.AuthenticationService;
+import com.jwtauthentication.jwtauthsecurity.service.jwt.JwtService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @RequestMapping("/auth")
 @RestController
@@ -25,18 +33,35 @@ public class AuthenticationController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<User> register(@RequestBody RegisterUserDto registerUserDto){
+    public ResponseEntity<Map<String,Object>> register(@RequestBody @Valid RegisterUserDto registerUserDto) throws SQLException {
         User registeredUser = authenticationService.signUp(registerUserDto);
-        return ResponseEntity.ok(registeredUser);
+        Map<String,Object> response = createUserResponse(registeredUser);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> authenticate(@RequestBody LoginUserDto loginUserDto){
         User authenticatedUser = authenticationService.authenticate(loginUserDto);
         String jwtToken = jwtService.generateToken(authenticatedUser);
-        LoginResponse loginResponse = new LoginResponse().setToken(jwtToken).setExpiresIn(jwtService.getExpirationTime());
+        LoginResponse loginResponse = new LoginResponse()
+                .setToken(jwtToken)
+                .setExpiresIn(jwtService.getExpirationTime());
         return ResponseEntity.ok(loginResponse);
     }
 
+    private Map<String,Object> createUserResponse(User user){
+        Map<String,Object> response = new LinkedHashMap<>();
+        response.put("timestamp",LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
+        response.put("Code",HttpStatus.OK.value());
+        response.put("Status",true);
+        response.put("message","Signed up successfully");
 
+        Map<String,Object> data = new LinkedHashMap<>();
+        data.put("id",user.getUserId());
+        data.put("name",user.getFullName());
+        data.put("email",user.getEmail());
+
+        response.put("data",data);
+        return response;
+    }
 }

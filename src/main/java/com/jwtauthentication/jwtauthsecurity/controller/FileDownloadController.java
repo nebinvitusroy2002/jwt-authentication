@@ -1,10 +1,6 @@
 package com.jwtauthentication.jwtauthsecurity.controller;
 
-import com.jwtauthentication.jwtauthsecurity.service.FileDownloadService;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
+import com.jwtauthentication.jwtauthsecurity.service.filedownload.FileDownloadService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

@@ -1,7 +1,7 @@
 package com.jwtauthentication.jwtauthsecurity.controller;
 
 import com.jwtauthentication.jwtauthsecurity.response.FileUploadResponse;
-import com.jwtauthentication.jwtauthsecurity.service.FileUploadService;
+import com.jwtauthentication.jwtauthsecurity.service.fileupload.FileUploadService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
