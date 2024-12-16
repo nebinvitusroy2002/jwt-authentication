@@ -34,6 +34,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth->auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/upload/**","/download/**").permitAll()
+                        .requestMatchers("/crud/**").permitAll()
                         .requestMatchers("/users/me","/users/").authenticated()
                         .anyRequest().authenticated())
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -46,7 +47,7 @@ public class SecurityConfiguration {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
 
         corsConfiguration.setAllowedOrigins(List.of("http://localhost:8005"));
-        corsConfiguration.setAllowedMethods(List.of("GET","POST"));
+        corsConfiguration.setAllowedMethods(List.of("GET","POST","PUT","Delete"));
         corsConfiguration.setAllowedHeaders(List.of("Authorization","Content-Type"));
         corsConfiguration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

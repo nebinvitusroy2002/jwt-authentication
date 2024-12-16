@@ -1,15 +1,17 @@
 package com.jwtauthentication.jwtauthsecurity.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 import lombok.*;
-
-import javax.validation.constraints.*;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class RegisterUserDto {
-    @NotEmpty(message = "Email cannot be empty")
+    @NotBlank(message = "Email cannot be empty")
     @Email(message = "Invalid email format")
     private String email;
     @NotBlank(message = "Password cannot be empty")
