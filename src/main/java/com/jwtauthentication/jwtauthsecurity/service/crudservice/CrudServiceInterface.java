@@ -8,8 +8,8 @@ public interface CrudServiceInterface {
     List<CrudOperation> getAll();
     CrudOperation getById(int id);
     CrudOperation createPost(CrudOperation crudOperation);
-    CrudOperation updatePost(int id, CrudOperation crudDetails);
-    void deletePost(int id);
+    CrudOperation updatePost(CrudOperation updatedCrud,int id);
+    String deletePost(int id);
     String getAuthenticatedUsername();
 
 }

@@ -33,8 +33,8 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth->auth
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/upload/**","/download/**").permitAll()
-                        .requestMatchers("/crud/**").permitAll()
+                        .requestMatchers("/upload/**","/download/**").authenticated()
+                        .requestMatchers("/crud/**").authenticated()
                         .requestMatchers("/users/me","/users/").authenticated()
                         .anyRequest().authenticated())
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

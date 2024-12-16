@@ -2,6 +2,7 @@ package com.jwtauthentication.jwtauthsecurity.service.authentication;
 
 import com.jwtauthentication.jwtauthsecurity.dto.LoginUserDto;
 import com.jwtauthentication.jwtauthsecurity.dto.RegisterUserDto;
+import com.jwtauthentication.jwtauthsecurity.error.AppException;
 import com.jwtauthentication.jwtauthsecurity.error.BadRequestException;
 import com.jwtauthentication.jwtauthsecurity.model.User;
 import com.jwtauthentication.jwtauthsecurity.repository.UserRepository;
@@ -38,7 +39,7 @@ public class AuthenticationService implements AuthenticationServiceInterface {
             return savedUser;
         }catch (Exception e){
             log.error("Error occurred while registering user with email: {}", input.getEmail(), e);
-            throw new SQLException("User not registered");
+            throw new AppException("User not registered");
         }
     }
 

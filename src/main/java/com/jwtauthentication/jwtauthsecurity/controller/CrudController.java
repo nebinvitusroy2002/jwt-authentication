@@ -3,10 +3,10 @@ package com.jwtauthentication.jwtauthsecurity.controller;
 import com.jwtauthentication.jwtauthsecurity.model.CrudOperation;
 import com.jwtauthentication.jwtauthsecurity.service.crudservice.CrudService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -27,17 +27,18 @@ public class CrudController {
     }
 
     @PostMapping("/create")
-    public CrudOperation createPost(@RequestBody CrudOperation crudOperation){
-        return crudService.createPost(crudOperation);
+    public ResponseEntity<CrudOperation> createPost(@RequestBody CrudOperation crudOperation){
+        return new ResponseEntity<CrudOperation>(crudService.createPost(crudOperation),HttpStatus.CREATED);
     }
 
     @PutMapping("/update/{id}")
-    public CrudOperation updatePost(@PathVariable int id,@RequestBody CrudOperation crudOperation){
-        return crudService.updatePost(id, crudOperation);
+    public ResponseEntity<CrudOperation> updatePost(@PathVariable int id,@RequestBody CrudOperation crudOperation){
+        return new ResponseEntity<CrudOperation>(crudService.updatePost(crudOperation,id), HttpStatus.OK);
     }
 
     @DeleteMapping("/delete/{id}")
-    public void deletePost(@PathVariable int id){
-        crudService.deletePost(id);
+    public ResponseEntity<String> deletePost(@PathVariable int id){
+        String message = crudService.deletePost(id);
+        return ResponseEntity.ok(message);
     }
 }
