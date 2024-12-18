@@ -1,10 +1,8 @@
 package com.jwtauthentication.jwtauthsecurity.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Accessors;
-
-import javax.validation.constraints.NotBlank;
 
 @Getter
 @Setter
