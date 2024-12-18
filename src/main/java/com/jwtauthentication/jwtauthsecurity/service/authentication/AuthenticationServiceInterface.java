@@ -1,7 +1,7 @@
 package com.jwtauthentication.jwtauthsecurity.service.authentication;
 
-import com.jwtauthentication.jwtauthsecurity.dto.LoginUserDto;
-import com.jwtauthentication.jwtauthsecurity.dto.RegisterUserDto;
+import com.jwtauthentication.jwtauthsecurity.dto.login.LoginUserDto;
+import com.jwtauthentication.jwtauthsecurity.dto.register.RegisterUserDto;
 import com.jwtauthentication.jwtauthsecurity.model.User;
 
 import java.sql.SQLException;

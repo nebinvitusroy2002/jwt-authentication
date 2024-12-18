@@ -1,4 +1,4 @@
-package com.jwtauthentication.jwtauthsecurity.dto;
+package com.jwtauthentication.jwtauthsecurity.dto.user;
 
 import lombok.*;
 

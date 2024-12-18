@@ -1,6 +1,5 @@
 package com.jwtauthentication.jwtauthsecurity.controller;
 
-import com.jwtauthentication.jwtauthsecurity.dto.UserResponseDto;
 import com.jwtauthentication.jwtauthsecurity.model.User;
 import com.jwtauthentication.jwtauthsecurity.service.user.UserService;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +11,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/users")
@@ -22,28 +24,44 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/me")
-    public ResponseEntity<UserResponseDto> authenticatedUser(){
+    public ResponseEntity<Map<String, Object>> authenticatedUser() {
         User currentUser = userService.getAuthenticatedUser();
-        UserResponseDto userResponseDto = createUserResponse(currentUser);
-        return ResponseEntity.ok(userResponseDto);
+        Map<String, Object> response = createUserResponse(currentUser, "Fetched authenticated user successfully");
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/")
-    public ResponseEntity<List<UserResponseDto>> allUsers(){
+    public ResponseEntity<Map<String, Object>> allUsers() {
         List<User> users = userService.allUsers();
-        List<UserResponseDto> userResponseDtos =users.stream()
-                .map(this::createUserResponse)
-                .toList();
-        return ResponseEntity.ok(userResponseDtos);
+        List<Map<String, Object>> userDataList = users.stream()
+                .map(this::extractUserData)
+                .collect(Collectors.toList());
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
+        response.put("Code", HttpStatus.OK.value());
+        response.put("Status", true);
+        response.put("message", "Fetched all users successfully");
+        response.put("data", userDataList);
+
+        return ResponseEntity.ok(response);
     }
 
-    private UserResponseDto createUserResponse(User user){
-        return UserResponseDto.builder()
-                .id(user.getUserId())
-                .email(user.getEmail())
-                .name(user.getFullName())
-                .statusCode(HttpStatus.OK.value())
-                .timeStamp(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE))
-                .build();
+    private Map<String, Object> createUserResponse(User user, String message) {
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
+        response.put("Code", HttpStatus.OK.value());
+        response.put("Status", true);
+        response.put("message", message);
+        response.put("data", extractUserData(user));
+        return response;
+    }
+
+    private Map<String, Object> extractUserData(User user) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("id", user.getUserId());
+        data.put("name", user.getFullName());
+        data.put("email", user.getEmail());
+        return data;
     }
 }

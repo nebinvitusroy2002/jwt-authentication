@@ -7,10 +7,11 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "crud")
-@Setter
+@Table(name = "posts")
 @Getter
-public class CrudOperation {
+@Setter
+
+public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;

@@ -1,6 +1,6 @@
 package com.jwtauthentication.jwtauthsecurity.error;
 
-import com.jwtauthentication.jwtauthsecurity.dto.UserResponseDto;
+import com.jwtauthentication.jwtauthsecurity.dto.user.UserResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
