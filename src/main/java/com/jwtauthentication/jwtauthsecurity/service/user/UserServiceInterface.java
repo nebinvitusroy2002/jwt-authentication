@@ -1,6 +1,6 @@
 package com.jwtauthentication.jwtauthsecurity.service.user;
 
-import com.jwtauthentication.jwtauthsecurity.dto.UserResponseDto;
+import com.jwtauthentication.jwtauthsecurity.dto.user.UserResponseDto;
 import com.jwtauthentication.jwtauthsecurity.model.User;
 
 import java.util.List;

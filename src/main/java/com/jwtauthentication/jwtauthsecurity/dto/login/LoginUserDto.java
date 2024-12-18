@@ -1,4 +1,4 @@
-package com.jwtauthentication.jwtauthsecurity.dto;
+package com.jwtauthentication.jwtauthsecurity.dto.login;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;

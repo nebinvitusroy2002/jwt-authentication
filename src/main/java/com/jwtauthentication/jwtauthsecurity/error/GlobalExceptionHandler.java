@@ -1,6 +1,6 @@
 package com.jwtauthentication.jwtauthsecurity.error;
 
-import com.jwtauthentication.jwtauthsecurity.dto.UserResponseDto;
+import com.jwtauthentication.jwtauthsecurity.dto.user.UserResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -34,31 +34,11 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<UserResponseDto>  handleGeneralException(Exception e){
-        String localizedMessage = messageSource.getMessage(
-                "error.unexpected",
-                null,
-                LocaleContextHolder.getLocale()
-        );
-        UserResponseDto errorResponse = UserResponseDto.builder()
-                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .statusMsg(localizedMessage)
-                .timeStamp(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
-                .build();
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
     @ExceptionHandler(AppException.class)
     public ResponseEntity<UserResponseDto> handleAppException(AppException e){
-        String localizedMessage = messageSource.getMessage(
-                "error.appexception",
-                null,
-                LocaleContextHolder.getLocale()
-        );
         UserResponseDto errorResponse = UserResponseDto.builder()
                 .statusCode(HttpStatus.BAD_REQUEST.value())
-                .statusMsg(localizedMessage)
+                .statusMsg(e.getMessage())
                 .timeStamp(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
                 .build();
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -72,5 +52,15 @@ public class GlobalExceptionHandler {
                 LocaleContextHolder.getLocale()
         );
         return new ResponseEntity<>(localizedMessage+":"+ ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<UserResponseDto>  handleGeneralException(Exception e){
+        UserResponseDto errorResponse = UserResponseDto.builder()
+                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .statusMsg(e.getMessage())
+                .timeStamp(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
+                .build();
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
