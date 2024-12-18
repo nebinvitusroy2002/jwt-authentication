@@ -22,25 +22,16 @@ public class PostService implements PostServiceInterface {
     @Autowired
     private PostRepository postRepository;
 
-//    @Override
-//    public List<PostResponse> getAllPosts() {
-//        log.info("Fetching all posts");
-//        try {
-//            return postRepository.findAll().stream()
-//                    .map(this::convertToPostResponse)
-//                    .collect(Collectors.toList());
-//        } catch (Exception e) {
-//            log.error("Error while fetching all posts: {}", e.getMessage());
-//            throw new AppException("Unable to fetch posts");
-//        }
-//    }
-
     @Override
     public Page<PostResponse> getAllPosts(Pageable pageable) {
         log.info("Fetching posts with pagination");
         try {
-            return postRepository.findAll(pageable)
+            Page<PostResponse> postsPage = postRepository.findAll(pageable)
                     .map(this::convertToPostResponse);
+            if (postsPage.isEmpty()){
+                log.warn("No posts found");
+            }
+            return postsPage;
         } catch (Exception e) {
             log.error("Error while fetching posts with pagination: {}", e.getMessage());
             throw new AppException("Unable to fetch posts");
