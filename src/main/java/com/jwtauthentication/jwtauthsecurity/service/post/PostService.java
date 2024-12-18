@@ -26,12 +26,9 @@ public class PostService implements PostServiceInterface {
     public Page<PostResponse> getAllPosts(Pageable pageable) {
         log.info("Fetching posts with pagination");
         try {
-            Page<PostResponse> postsPage = postRepository.findAll(pageable)
-                    .map(this::convertToPostResponse);
-            if (postsPage.isEmpty()){
-                log.warn("No posts found");
-            }
-            return postsPage;
+            Page<Post> posts = postRepository.findAll(pageable);
+            log.info("Fetched posts: {}", posts.getContent());
+            return posts.map(this::convertToPostResponse);
         } catch (Exception e) {
             log.error("Error while fetching posts with pagination: {}", e.getMessage());
             throw new AppException("Unable to fetch posts");
@@ -54,7 +51,7 @@ public class PostService implements PostServiceInterface {
         log.info("Creating a new post");
         try {
             Post post = convertToPostEntity(postDto);
-            post.setCreatedAt(LocalDateTime.now()); // Automatically set creation time
+            post.setCreatedAt(LocalDateTime.now());
             Post savedPost = postRepository.save(post);
             log.info("Post created with ID: {}", savedPost.getId());
             return convertToPostResponse(savedPost);
@@ -76,7 +73,7 @@ public class PostService implements PostServiceInterface {
         existingPost.setCreateBy(postDto.getCreateBy());
         existingPost.setUpdatedBy(postDto.getUpdatedBy());
         existingPost.setText(postDto.getText());
-        existingPost.setUpdatedAt(LocalDateTime.now()); // Automatically set updated time
+        existingPost.setUpdatedAt(LocalDateTime.now());
 
         try {
             Post updatedPost = postRepository.save(existingPost);
@@ -126,7 +123,7 @@ public class PostService implements PostServiceInterface {
     }
 
     public String getAuthenticatedUsername() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+      Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof UserDetails) {
             return ((UserDetails) principal).getUsername();
         } else {
@@ -134,3 +131,4 @@ public class PostService implements PostServiceInterface {
         }
     }
 }
+
