@@ -14,6 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -26,13 +28,29 @@ public class AuthenticationService implements AuthenticationServiceInterface {
 
     public User signUp(RegisterUserDto input) throws SQLException {
         log.info("Attempting to register user with email: {}", input.getEmail());
+
+        List<String> validRoles = List.of("USER", "ADMIN");
+        String role = input.getRole();
+
+        if (role != null && !validRoles.contains(role)) {
+            log.error("Invalid role provided: {}", role);
+            throw new BadRequestException("Invalid role provided");
+        }
+
         if (userRepository.findByEmail(input.getEmail()).isPresent()) {
             log.error("User already registered with email: {}", input.getEmail());
             throw new BadRequestException("User already registered with this email");
         }
+
+        if (role == null || role.isEmpty()) {
+            role = "USER";
+        }
+
         User user = new User().setFullName(input.getName())
                 .setEmail(input.getEmail())
-                .setPassword(passwordEncoder.encode(input.getPassword()));
+                .setPassword(passwordEncoder.encode(input.getPassword()))
+                .setRole(Set.of(role));
+
         try {
             User savedUser = userRepository.save(user);
             log.info("User successfully registered with email: {}", savedUser.getEmail());

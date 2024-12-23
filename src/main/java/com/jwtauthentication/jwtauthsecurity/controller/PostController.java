@@ -1,6 +1,7 @@
 package com.jwtauthentication.jwtauthsecurity.controller;
 
 import com.jwtauthentication.jwtauthsecurity.dto.post.PostDto;
+import com.jwtauthentication.jwtauthsecurity.model.User;
 import com.jwtauthentication.jwtauthsecurity.response.PostResponse;
 import com.jwtauthentication.jwtauthsecurity.service.post.PostService;
 import com.jwtauthentication.jwtauthsecurity.response.ApiResponse;
@@ -9,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -73,8 +75,8 @@ public class PostController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<String>> deletePost(@PathVariable int id) {
-        String message = postService.deletePost(id);
+    public ResponseEntity<ApiResponse<String>> deletePost(@PathVariable int id, @AuthenticationPrincipal User user) {
+        String message = postService.deletePost(id,user);
         ApiResponse<String> response = new ApiResponse<>(
                 LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                 HttpStatus.OK.value(),

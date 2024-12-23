@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
@@ -40,14 +41,11 @@ public class UserService implements UserDetailsService {
         });
     }
 
+
     @Override
-    public User loadUserByUsername(String userEmail) {
-        log.info("Loading user by email: {}",userEmail);
+    public User loadUserByUsername(String userEmail){
         return userRepository.findByEmail(userEmail)
-                .orElseThrow(()->{
-                    log.error("User not found with email: {}",userEmail);
-                    return new AppException("User not found with email: "+userEmail);
-                });
+                .orElseThrow(()->new AppException("User not found with email:"+userEmail));
     }
 
 }
