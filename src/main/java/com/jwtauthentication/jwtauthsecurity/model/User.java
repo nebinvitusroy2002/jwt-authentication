@@ -7,11 +7,13 @@ import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "user")
@@ -42,9 +44,18 @@ public class User implements UserDetails {
     @Column(name = "updated_at")
     private LocalDate updatedAt;
 
+    @Getter
+    @Setter
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_roles",joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "role")
+    private Set<String> role;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return role.stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toSet());
     }
 
     @Override

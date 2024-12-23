@@ -1,6 +1,9 @@
 package com.jwtauthentication.jwtauthsecurity.service.post;
 
 import com.jwtauthentication.jwtauthsecurity.dto.post.PostDto;
+import com.jwtauthentication.jwtauthsecurity.error.BadRequestException;
+import com.jwtauthentication.jwtauthsecurity.model.User;
+import com.jwtauthentication.jwtauthsecurity.repository.UserRepository;
 import com.jwtauthentication.jwtauthsecurity.response.PostResponse;
 import com.jwtauthentication.jwtauthsecurity.error.AppException;
 import com.jwtauthentication.jwtauthsecurity.model.Post;
@@ -21,6 +24,8 @@ public class PostService implements PostServiceInterface {
 
     @Autowired
     private PostRepository postRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @Override
     public Page<PostResponse> getAllPosts(Pageable pageable) {
@@ -49,8 +54,16 @@ public class PostService implements PostServiceInterface {
     @Override
     public PostResponse createPost(PostDto postDto) {
         log.info("Creating a new post");
+
+        String username = getAuthenticatedUsername();
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(()->{
+                    log.error("User not found with email: {}",username);
+                    return new AppException("User not found");
+                });
         try {
             Post post = convertToPostEntity(postDto);
+            post.setUser(user);
             post.setCreatedAt(LocalDateTime.now());
             Post savedPost = postRepository.save(post);
             log.info("Post created with ID: {}", savedPost.getId());
@@ -86,20 +99,28 @@ public class PostService implements PostServiceInterface {
     }
 
     @Override
-    public String deletePost(int id) {
-        log.info("Attempting to delete post with ID: {}", id);
-        if (!postRepository.existsById(id)) {
-            log.warn("Post with ID {} not found for deletion", id);
-            throw new AppException("Post not found");
+    public String deletePost(int postId, User user) {
+        log.info("Attempting to delete post with ID: {} by user with ID: {}", postId, user.getUserId());
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> {
+                    log.error("Post with ID: {} not found", postId);
+                    return new BadRequestException("Post not found");
+                });
+
+        if (user.getRole().contains("ADMIN")) {
+            log.info("User with ID: {} has ADMIN role. Deleting post with ID: {}", user.getUserId(), postId);
+            postRepository.delete(post);
+        } else if (post.getUser().getUserId() == user.getUserId()) {
+            log.info("User with ID: {} is the owner of post ID: {}. Deleting post.", user.getUserId(), postId);
+            postRepository.delete(post);
+        } else {
+            log.warn("User with ID: {} attempted to delete post ID: {} without sufficient permissions.", user.getUserId(), postId);
+            throw new AppException("Access denied");
         }
-        try {
-            postRepository.deleteById(id);
-            log.info("Post with ID {} deleted successfully", id);
-            return "Post deleted successfully.";
-        } catch (Exception e) {
-            log.error("Error while deleting post with ID {}: {}", id, e.getMessage());
-            throw new AppException("Unable to delete post");
-        }
+        String successMessage = String.format("Post with ID: %d successfully deleted by user with ID: %d", postId, user.getUserId());
+        log.info(successMessage);
+        return successMessage;
     }
 
     private PostResponse convertToPostResponse(Post post) {
