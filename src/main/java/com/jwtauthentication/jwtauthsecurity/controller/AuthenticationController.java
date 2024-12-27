@@ -10,12 +10,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
@@ -30,9 +26,9 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
     @PostMapping("/signup")
-    public ResponseEntity<Map<String,Object>> register(@RequestBody @Valid RegisterUserDto registerUserDto) throws SQLException {
-        User registeredUser = authenticationService.signUp(registerUserDto);
-        Map<String,Object> response = createUserResponse(registeredUser);
+    public ResponseEntity<Map<String, Object>> register(@RequestBody @Valid RegisterUserDto registerUserDto) {
+        User registeredUser = authenticationService.signUp(registerUserDto, registerUserDto.getRole());
+        Map<String, Object> response = createUserResponse(registeredUser);
         return ResponseEntity.ok(response);
     }
 

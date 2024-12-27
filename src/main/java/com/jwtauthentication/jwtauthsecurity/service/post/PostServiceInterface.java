@@ -1,6 +1,7 @@
 package com.jwtauthentication.jwtauthsecurity.service.post;
 
 import com.jwtauthentication.jwtauthsecurity.dto.post.PostDto;
+import com.jwtauthentication.jwtauthsecurity.model.Post;
 import com.jwtauthentication.jwtauthsecurity.model.User;
 import com.jwtauthentication.jwtauthsecurity.response.PostResponse;
 import org.springframework.data.domain.Page;
@@ -13,5 +14,4 @@ public interface PostServiceInterface {
     PostResponse updatePost(PostDto postDto, int id);
     String deletePost(int id, User user);
     String getAuthenticatedUsername();
-
 }

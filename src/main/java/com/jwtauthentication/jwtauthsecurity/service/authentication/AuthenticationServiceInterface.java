@@ -7,6 +7,6 @@ import com.jwtauthentication.jwtauthsecurity.model.User;
 import java.sql.SQLException;
 
 public interface AuthenticationServiceInterface {
-     User signUp(RegisterUserDto input) throws SQLException;
+     User signUp(RegisterUserDto input, String roleName);
      User authenticate(LoginUserDto input);
 }

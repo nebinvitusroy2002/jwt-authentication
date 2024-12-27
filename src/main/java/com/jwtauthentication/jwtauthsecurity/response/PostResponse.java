@@ -1,14 +1,13 @@
 package com.jwtauthentication.jwtauthsecurity.response;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 public class PostResponse {
     private int id;
     private String createBy;
