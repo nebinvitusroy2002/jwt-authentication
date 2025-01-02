@@ -27,7 +27,7 @@ public class AuthenticationController {
 
     @PostMapping("/signup")
     public ResponseEntity<Map<String, Object>> register(@RequestBody @Valid RegisterUserDto registerUserDto) {
-        User registeredUser = authenticationService.signUp(registerUserDto, registerUserDto.getRole());
+        User registeredUser = authenticationService.signUp(registerUserDto);
         Map<String, Object> response = createUserResponse(registeredUser);
         return ResponseEntity.ok(response);
     }

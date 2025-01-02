@@ -26,26 +26,26 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(nullable = false)
-    private int userId;
+    private long userId;
 
     @Column(nullable = false)
     private String fullName;
 
-    @Column(unique = true,length = 150,nullable = false)
+    @Column(unique = true, length = 150, nullable = false)
     private String email;
 
     @Column(nullable = false)
     private String password;
 
     @CreationTimestamp
-    @Column(updatable = false,name = "created_at")
+    @Column(updatable = false, name = "created_at")
     private LocalDate createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDate updatedAt;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)  // Changed CascadeType.ALL to CascadeType.PERSIST
     @JoinTable(name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
@@ -87,5 +87,4 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return UserDetails.super.isEnabled();
     }
-
 }

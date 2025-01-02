@@ -30,7 +30,7 @@ public class AuthenticationService implements AuthenticationServiceInterface {
     private final AuthenticationManager authenticationManager;
     private final MessageSource messageSource;
 
-    public User signUp(RegisterUserDto input, String roleName) {
+    public User signUp(RegisterUserDto input) {
         log.info("Attempting to register user with email: {}", input.getEmail());
 
         if (userRepository.findByEmail(input.getEmail()).isPresent()) {
@@ -39,15 +39,16 @@ public class AuthenticationService implements AuthenticationServiceInterface {
                     messageSource.getMessage("error.badrequest", null, LocaleContextHolder.getLocale())
             );
         }
-        Role role = roleRepository.findByName(roleName)
-                .orElseThrow(() -> new BadRequestException(
-                        messageSource.getMessage("error.invalidrole", null, LocaleContextHolder.getLocale())
-                ));
+
+        Role defaultRole = roleRepository.findByName("USER")
+                .orElseThrow(() -> new AppException("Default USER role is not set up."));
+
         User user = new User();
         user.setFullName(input.getName());
         user.setEmail(input.getEmail());
         user.setPassword(passwordEncoder.encode(input.getPassword()));
-        user.setRoles(Set.of(role));
+        user.setRoles(Set.of(defaultRole));
+
         try {
             User savedUser = userRepository.save(user);
             log.info("User successfully registered with email: {}", savedUser.getEmail());
@@ -59,6 +60,7 @@ public class AuthenticationService implements AuthenticationServiceInterface {
             );
         }
     }
+
 
     public User authenticate(LoginUserDto input) {
         log.info("Attempting to authenticate user with email: {}", input.getEmail());

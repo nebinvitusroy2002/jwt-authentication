@@ -46,7 +46,7 @@ public class PostService {
         return convertToPostResponse(savedPost);
     }
 
-    public PostResponse updatePost(PostDto postDto, int id) {
+    public PostResponse updatePost(PostDto postDto, long id) {
         log.info("Updating post with ID: {}", id);
 
         Post existingPost = postRepository.findById(id)
@@ -67,7 +67,7 @@ public class PostService {
         return convertToPostResponse(updatedPost);
     }
 
-    public String deletePost(int postId,User user) {
+    public String deletePost(long postId,User user) {
         log.info("Attempting to delete post with ID: {}", postId);
 
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -100,7 +100,7 @@ public class PostService {
         return posts.map(this::convertToPostResponse);
     }
 
-    public PostResponse getPostById(int id) {
+    public PostResponse getPostById(long id) {
         log.info("Fetching post with ID: {}", id);
 
         Post post = postRepository.findById(id)

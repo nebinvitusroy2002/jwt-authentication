@@ -1,7 +1,9 @@
 package com.jwtauthentication.jwtauthsecurity.service.user;
 
 import com.jwtauthentication.jwtauthsecurity.error.AppException;
+import com.jwtauthentication.jwtauthsecurity.model.Role;
 import com.jwtauthentication.jwtauthsecurity.model.User;
+import com.jwtauthentication.jwtauthsecurity.repository.RoleRepository;
 import com.jwtauthentication.jwtauthsecurity.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +23,8 @@ import java.util.List;
 public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
-    private final MessageSource messageSource;  // Injecting MessageSource to fetch messages
+    private final MessageSource messageSource;
+    private final RoleRepository roleRepository;
 
     public List<User> allUsers() {
         log.info("Fetching all users from the database");
@@ -41,6 +44,17 @@ public class UserService implements UserDetailsService {
         log.info("Authenticated user's email: {}", userEmail);
         return findByUsername(userEmail);
     }
+
+    public User assignRoleToUser(Long userId, Long roleId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException("User not found."));
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new AppException("Role not found."));
+
+        user.getRoles().add(role);
+        return userRepository.save(user);
+    }
+
 
     public User findByUsername(String username) {
         log.info("Fetching user with username: {}", username);

@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PostResponse {
-    private int id;
+    private long id;
     private String createBy;
     private String updatedBy;
     private String text;
