@@ -45,14 +45,16 @@ public class UserService implements UserDetailsService {
         return findByUsername(userEmail);
     }
 
-    public User assignRoleToUser(Long userId, Long roleId) {
+    public void assignRoleToUser(Long userId, Long roleId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AppException("User not found."));
+                .orElseThrow(() -> new RuntimeException("User not found"));
         Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new AppException("Role not found."));
+                .orElseThrow(() -> new RuntimeException("Role not found"));
 
-        user.getRoles().add(role);
-        return userRepository.save(user);
+        if (!user.getRoles().contains(role)) {
+            user.getRoles().add(role);
+            userRepository.save(user);
+        }
     }
 
 

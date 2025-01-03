@@ -67,11 +67,8 @@ public class PostService {
         return convertToPostResponse(updatedPost);
     }
 
-    public String deletePost(long postId,User user) {
+    public String deletePost(long postId, User authenticatedUser) {
         log.info("Attempting to delete post with ID: {}", postId);
-
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User authenticatedUser = userService.findByUsername(username);
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new BadRequestException(

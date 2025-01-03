@@ -75,8 +75,8 @@ public class PostController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<String>> deletePost(@PathVariable int id, @AuthenticationPrincipal User user) {
-        String message = postService.deletePost(id,user);
+    public ResponseEntity<ApiResponse<String>> deletePost(@PathVariable long id, @AuthenticationPrincipal User authenticatedUser) {
+        String message = postService.deletePost(id, authenticatedUser);
         ApiResponse<String> response = new ApiResponse<>(
                 LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                 HttpStatus.OK.value(),

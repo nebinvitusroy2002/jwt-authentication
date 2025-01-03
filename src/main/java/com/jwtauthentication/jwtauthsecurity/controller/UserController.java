@@ -1,5 +1,6 @@
 package com.jwtauthentication.jwtauthsecurity.controller;
 
+import com.jwtauthentication.jwtauthsecurity.model.Role;
 import com.jwtauthentication.jwtauthsecurity.model.User;
 import com.jwtauthentication.jwtauthsecurity.service.user.UserService;
 import lombok.RequiredArgsConstructor;
@@ -69,6 +70,9 @@ public class UserController {
         data.put("id", user.getUserId());
         data.put("name", user.getFullName());
         data.put("email", user.getEmail());
+        data.put("role",user.getRoles().stream()
+                .map(Role::getName)
+                .collect(Collectors.toList()));
         return data;
     }
 }

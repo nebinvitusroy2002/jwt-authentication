@@ -11,7 +11,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Component
@@ -46,7 +48,7 @@ public class DataBootstrap {
             admin.setEmail("admin@example.com");
             admin.setPassword(passwordEncoder.encode("admin123"));
 
-            Set<Role> roles = new HashSet<>();
+            List<Role> roles = new ArrayList<>();
             roles.add(adminRole);
             roles.add(userRole);  // Add userRole if needed
             admin.setRoles(roles);

@@ -5,9 +5,7 @@ import com.jwtauthentication.jwtauthsecurity.dto.register.RegisterUserDto;
 import com.jwtauthentication.jwtauthsecurity.error.AppException;
 import com.jwtauthentication.jwtauthsecurity.error.BadRequestException;
 import com.jwtauthentication.jwtauthsecurity.model.User;
-import com.jwtauthentication.jwtauthsecurity.model.Role;
 import com.jwtauthentication.jwtauthsecurity.repository.UserRepository;
-import com.jwtauthentication.jwtauthsecurity.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
@@ -17,7 +15,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.context.i18n.LocaleContextHolder;
 
-import java.util.Set;
 
 @Slf4j
 @Service
@@ -25,7 +22,6 @@ import java.util.Set;
 public class AuthenticationService implements AuthenticationServiceInterface {
 
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final MessageSource messageSource;
@@ -40,14 +36,10 @@ public class AuthenticationService implements AuthenticationServiceInterface {
             );
         }
 
-        Role defaultRole = roleRepository.findByName("USER")
-                .orElseThrow(() -> new AppException("Default USER role is not set up."));
-
         User user = new User();
         user.setFullName(input.getName());
         user.setEmail(input.getEmail());
         user.setPassword(passwordEncoder.encode(input.getPassword()));
-        user.setRoles(Set.of(defaultRole));
 
         try {
             User savedUser = userRepository.save(user);

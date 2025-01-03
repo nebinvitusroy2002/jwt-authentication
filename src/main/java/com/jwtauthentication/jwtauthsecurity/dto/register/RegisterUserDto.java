@@ -18,6 +18,4 @@ public class RegisterUserDto {
     private String password;
     @NotBlank(message = "Name cannot be null")
     private String name;
-    @NotBlank(message = "Role cannot be null")
-    private String role;
 }
