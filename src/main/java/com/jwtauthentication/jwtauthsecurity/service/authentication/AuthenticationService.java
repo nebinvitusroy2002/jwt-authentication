@@ -8,12 +8,13 @@ import com.jwtauthentication.jwtauthsecurity.model.User;
 import com.jwtauthentication.jwtauthsecurity.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.context.i18n.LocaleContextHolder;
 
-import java.sql.SQLException;
 
 @Slf4j
 @Service
@@ -23,38 +24,56 @@ public class AuthenticationService implements AuthenticationServiceInterface {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final MessageSource messageSource;
 
-    public User signUp(RegisterUserDto input) throws SQLException {
+    public User signUp(RegisterUserDto input) {
         log.info("Attempting to register user with email: {}", input.getEmail());
+
         if (userRepository.findByEmail(input.getEmail()).isPresent()) {
             log.error("User already registered with email: {}", input.getEmail());
-            throw new BadRequestException("User already registered with this email");
+            throw new BadRequestException(
+                    messageSource.getMessage("error.badrequest", null, LocaleContextHolder.getLocale())
+            );
         }
-        User user = new User().setFullName(input.getName())
-                .setEmail(input.getEmail())
-                .setPassword(passwordEncoder.encode(input.getPassword()));
+
+        User user = new User();
+        user.setFullName(input.getName());
+        user.setEmail(input.getEmail());
+        user.setPassword(passwordEncoder.encode(input.getPassword()));
+
         try {
             User savedUser = userRepository.save(user);
             log.info("User successfully registered with email: {}", savedUser.getEmail());
             return savedUser;
-        }catch (Exception e){
+        } catch (Exception e) {
             log.error("Error occurred while registering user with email: {}", input.getEmail(), e);
-            throw new AppException("User not registered");
+            throw new AppException(
+                    messageSource.getMessage("error.appexception", null, LocaleContextHolder.getLocale())
+            );
         }
     }
 
-    public User authenticate(LoginUserDto input){
+
+    public User authenticate(LoginUserDto input) {
         log.info("Attempting to authenticate user with email: {}", input.getEmail());
+
         try {
-            authenticationManager.authenticate
-                    (new UsernamePasswordAuthenticationToken(input.getEmail(),input.getPassword()));
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(input.getEmail(), input.getPassword())
+            );
+
             User authenticatedUser = userRepository.findByEmail(input.getEmail())
-                    .orElseThrow(()-> new BadRequestException("Unable to find the user..."));
+                    .orElseThrow(() -> new BadRequestException(
+                            messageSource.getMessage("error.badrequest", null, LocaleContextHolder.getLocale())
+                    ));
+
             log.info("User successfully authenticated with email: {}", authenticatedUser.getEmail());
             return authenticatedUser;
-        }catch (Exception e){
+        } catch (Exception e) {
             log.error("Authentication failed for user with email: {}", input.getEmail(), e);
-            throw new BadRequestException("Unable to authenticate the user");
+            throw new BadRequestException(
+                    messageSource.getMessage("error.badrequest", null, LocaleContextHolder.getLocale())
+            );
         }
     }
 }

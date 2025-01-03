@@ -7,11 +7,13 @@ import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "user")
@@ -23,28 +25,36 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(nullable = false)
-    private int userId;
+    private long userId;
 
     @Column(nullable = false)
     private String fullName;
 
-    @Column(unique = true,length = 150,nullable = false)
+    @Column(unique = true, length = 150, nullable = false)
     private String email;
 
     @Column(nullable = false)
     private String password;
 
     @CreationTimestamp
-    @Column(updatable = false,name = "created_at")
+    @Column(updatable = false, name = "created_at")
     private LocalDate createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDate updatedAt;
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private List<Role> roles;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return roles.stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                .collect(Collectors.toSet());
     }
 
     @Override
@@ -76,5 +86,4 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return UserDetails.super.isEnabled();
     }
-
 }
