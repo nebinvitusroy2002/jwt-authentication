@@ -2,6 +2,7 @@ package com.jwtauthentication.jwtauthsecurity.controller;
 
 import com.jwtauthentication.jwtauthsecurity.dto.login.LoginUserDto;
 import com.jwtauthentication.jwtauthsecurity.dto.register.RegisterUserDto;
+import com.jwtauthentication.jwtauthsecurity.model.Role;
 import com.jwtauthentication.jwtauthsecurity.model.User;
 import com.jwtauthentication.jwtauthsecurity.response.LoginResponse;
 import com.jwtauthentication.jwtauthsecurity.service.authentication.AuthenticationService;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @RequestMapping("/auth")
@@ -35,7 +37,10 @@ public class AuthenticationController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> authenticate(@RequestBody @Valid LoginUserDto loginUserDto){
         User authenticatedUser = authenticationService.authenticate(loginUserDto);
-        String jwtToken = jwtService.generateToken(authenticatedUser);
+        List<String> roles = authenticatedUser.getRoles().stream()
+                .map(Role::getName)
+                .toList();
+        String jwtToken = jwtService.generateToken(authenticatedUser.getEmail(),roles);
         LoginResponse loginResponse = new LoginResponse()
                 .setToken(jwtToken)
                 .setExpiresIn(jwtService.getExpirationTime());

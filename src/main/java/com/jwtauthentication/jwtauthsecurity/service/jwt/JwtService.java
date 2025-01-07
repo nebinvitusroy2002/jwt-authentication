@@ -7,11 +7,10 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class JwtService implements JwtServiceInterface {
 
     @Value("${security.jwt.secret-key}")
@@ -27,6 +27,26 @@ public class JwtService implements JwtServiceInterface {
     @Value("${security.jwt.expiration-time}")
     private long jwtExpiration;
 
+    public String generateToken(String username,List<String> roles){
+        List<String> permissions = new ArrayList<>();
+        for (String role : roles){
+            permissions.addAll(getPermissionsForRole(role));
+        }
+        Map<String,Object> claims = new HashMap<>();
+        claims.put("roles",roles);
+        claims.put("permissions",permissions);
+        return buildToken(claims,username);
+    }
+
+    public String buildToken(Map<String,Object> claims,String username){
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(username)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis()+jwtExpiration))
+                .signWith(getSignInKey(),SignatureAlgorithm.HS256)
+                .compact();
+    }
     public String extractUsername(String token) {
         try{
             log.info("Extracting username from token");
@@ -47,50 +67,10 @@ public class JwtService implements JwtServiceInterface {
             throw new JwtException("Error extracting claim from token",e);
         }
     }
-    public String generateToken(UserDetails userDetails) {
-        try{
-            log.info("Generating token for user: {}",userDetails.getUsername());
-            return generateToken(new HashMap<>(), userDetails);
-        }catch (JwtException e){
-            log.error("Error generating token",e);
-            throw new JwtException("Error generating token",e);
-        }
-    }
-
-    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
-        try{
-            log.info("Generating token with extra claims for user: {}",userDetails.getUsername());
-            return buildToken(extraClaims, userDetails, jwtExpiration);
-        }catch (JwtException e){
-            log.error("Error generating token with extra claims",e);
-            throw new JwtException("Error generating token with extra claims",e);
-        }
-    }
 
     public long getExpirationTime() {
         log.info("Jwt expiration time: {}",jwtExpiration);
         return jwtExpiration;
-    }
-
-    private String buildToken(
-            Map<String, Object> extraClaims,
-            UserDetails userDetails,
-            long expiration
-    ) {
-        try {
-            log.info("Building token with claim for user: {}",userDetails.getUsername());
-            return Jwts
-                    .builder()
-                    .setClaims(extraClaims)
-                    .setSubject(userDetails.getUsername())
-                    .setIssuedAt(new Date(System.currentTimeMillis()))
-                    .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                    .signWith(getSignInKey(), SignatureAlgorithm.HS256)
-                    .compact();
-        }catch (JwtException e){
-            log.error("Error building token",e);
-            throw new JwtException("Error building token",e);
-        }
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
@@ -147,6 +127,16 @@ public class JwtService implements JwtServiceInterface {
         }catch (Exception e){
             log.error("Error decoding the secret key",e);
             throw new JwtException("Error decoding the secret key",e);
+        }
+    }
+
+    public List<String> getPermissionsForRole(String role) {
+        if ("ADMIN".equals(role)) {
+            return List.of("READ", "WRITE", "UPDATE", "DELETE");
+        } else if ("USER".equals(role)) {
+            return List.of("READ","WRITE");
+        } else {
+            return List.of();
         }
     }
 }

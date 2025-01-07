@@ -35,7 +35,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/roles/**").hasAuthority("ADMIN")
                         .requestMatchers("/upload/**","/download/**").authenticated()
-                        .requestMatchers("/post/**").authenticated()
+                        .requestMatchers("/post/**").hasAnyRole("USER","ADMIN")
                         .requestMatchers("/users/me","/users/").authenticated()
                         .anyRequest().authenticated())
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

@@ -7,30 +7,54 @@ import com.jwtauthentication.jwtauthsecurity.model.Post;
 import com.jwtauthentication.jwtauthsecurity.model.User;
 import com.jwtauthentication.jwtauthsecurity.repository.PostRepository;
 import com.jwtauthentication.jwtauthsecurity.response.PostResponse;
+import com.jwtauthentication.jwtauthsecurity.service.jwt.JwtService;
 import com.jwtauthentication.jwtauthsecurity.service.user.UserService;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.context.i18n.LocaleContextHolder;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class PostService {
+public class PostService implements PostServiceInterface{
 
     private final PostRepository postRepository;
     private final UserService userService;
-    private final MessageSource messageSource;  // Injecting MessageSource to fetch messages
+    private final MessageSource messageSource;
+    private final JwtService jwtService;
+
+    private boolean hasPermission(String requiredPermission) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return false;
+        }
+
+        List<String> userPermissions = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
+
+        return userPermissions.contains(requiredPermission);
+    }
+
 
     public PostResponse createPost(PostDto postDto) {
-        log.info("Creating a new post");
-
+        if (hasPermission("CREATE")) {
+            throw new AppException("Access denied. You do not have permission to create posts.");
+        }
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userService.findByUsername(username);
 
@@ -47,7 +71,9 @@ public class PostService {
     }
 
     public PostResponse updatePost(PostDto postDto, long id) {
-        log.info("Updating post with ID: {}", id);
+        if (hasPermission("UPDATE")) {
+            throw new AppException("Access denied. You do not have permission to update posts.");
+        }
 
         Post existingPost = postRepository.findById(id)
                 .orElseThrow(() -> {
@@ -57,9 +83,12 @@ public class PostService {
                     );
                 });
 
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userService.findByUsername(username);
+
         existingPost.setText(postDto.getText());
         existingPost.setUpdatedAt(LocalDateTime.now());
-        existingPost.setUpdatedBy(postDto.getUpdatedBy());
+        existingPost.setUpdatedBy(user.getFullName());
 
         Post updatedPost = postRepository.save(existingPost);
         log.info("Post with ID {} updated successfully", id);
@@ -67,22 +96,39 @@ public class PostService {
         return convertToPostResponse(updatedPost);
     }
 
-    public String deletePost(long postId, User authenticatedUser) {
-        log.info("Attempting to delete post with ID: {}", postId);
-
+    public String deletePost(long postId, String token) {
+        if (hasPermission("DELETE")) {
+            throw new AppException("Access denied. You do not have permission to delete posts.");
+        }
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new BadRequestException(
                         messageSource.getMessage("error.postnotfound", null, LocaleContextHolder.getLocale())
                 ));
 
-        boolean isAdmin = authenticatedUser.getRoles().stream()
-                .anyMatch(role -> role.getName().equalsIgnoreCase("ADMIN"));
+        Object rolesClaim = jwtService.extractClaim(token, claims -> claims.get("roles"));
+        List<String> roles;
+        if (rolesClaim instanceof List<?>) {
+            roles = ((List<?>) rolesClaim).stream()
+                    .filter(String.class::isInstance)
+                    .map(String.class::cast)
+                    .toList();
+        } else {
+            throw new JwtException("Roles claim is not in expected format.");
+        }
+        boolean isAdmin = roles.contains("ADMIN");
 
-        if (isAdmin || post.getUser().getUserId() == authenticatedUser.getUserId()) {
+        if (isAdmin) {
             postRepository.delete(post);
             log.info("Post with ID {} deleted successfully", postId);
             return messageSource.getMessage("success.postdeleted", null, LocaleContextHolder.getLocale());
-        } else {
+        }
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User authenticatedUser = userService.findByUsername(username);
+        if (post.getUser().getUserId() == authenticatedUser.getUserId()) {
+            postRepository.delete(post);
+            log.info("Post with ID {} deleted successfully by user", postId);
+            return messageSource.getMessage("success.postdeleted", null, LocaleContextHolder.getLocale());
+        }else {
             log.warn("User {} is not authorized to delete post {}", authenticatedUser.getUserId(), postId);
             throw new AppException(
                     messageSource.getMessage("error.accessdenied", null, LocaleContextHolder.getLocale())
@@ -91,11 +137,12 @@ public class PostService {
     }
 
     public Page<PostResponse> getAllPosts(Pageable pageable) {
-        log.info("Fetching posts with pagination");
-
-        Page<Post> posts = postRepository.findAll(pageable);
-        return posts.map(this::convertToPostResponse);
+        if (hasPermission("READ")) {
+            throw new AppException("Access denied. You do not have permission to view posts.");
+        }
+        return postRepository.findAll(pageable).map(this::convertToPostResponse);
     }
+
 
     public PostResponse getPostById(long id) {
         log.info("Fetching post with ID: {}", id);

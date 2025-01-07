@@ -12,9 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -36,11 +34,6 @@ public class DataBootstrap {
             return roleRepository.save(role);
         });
 
-        Role userRole = roleRepository.findByName("USER").orElseGet(() -> {
-            Role role = new Role();
-            role.setName("USER");
-            return roleRepository.save(role);
-        });
 
         if (userRepository.findByEmail("admin@example.com").isEmpty()) {
             User admin = new User();
@@ -50,7 +43,6 @@ public class DataBootstrap {
 
             List<Role> roles = new ArrayList<>();
             roles.add(adminRole);
-            roles.add(userRole);  // Add userRole if needed
             admin.setRoles(roles);
 
             userRepository.save(admin);

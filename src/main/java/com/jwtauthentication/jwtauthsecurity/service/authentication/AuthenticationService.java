@@ -4,7 +4,9 @@ import com.jwtauthentication.jwtauthsecurity.dto.login.LoginUserDto;
 import com.jwtauthentication.jwtauthsecurity.dto.register.RegisterUserDto;
 import com.jwtauthentication.jwtauthsecurity.error.AppException;
 import com.jwtauthentication.jwtauthsecurity.error.BadRequestException;
+import com.jwtauthentication.jwtauthsecurity.model.Role;
 import com.jwtauthentication.jwtauthsecurity.model.User;
+import com.jwtauthentication.jwtauthsecurity.repository.RoleRepository;
 import com.jwtauthentication.jwtauthsecurity.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +16,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.context.i18n.LocaleContextHolder;
+
+import java.util.List;
 
 
 @Slf4j
@@ -25,6 +29,7 @@ public class AuthenticationService implements AuthenticationServiceInterface {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final MessageSource messageSource;
+    private final RoleRepository roleRepository;
 
     public User signUp(RegisterUserDto input) {
         log.info("Attempting to register user with email: {}", input.getEmail());
@@ -40,6 +45,10 @@ public class AuthenticationService implements AuthenticationServiceInterface {
         user.setFullName(input.getName());
         user.setEmail(input.getEmail());
         user.setPassword(passwordEncoder.encode(input.getPassword()));
+
+        Role userRole = roleRepository.findByName("USER").orElseThrow(()->
+                new AppException("Default USER role not found in the database"));
+        user.setRoles(List.of(userRole));
 
         try {
             User savedUser = userRepository.save(user);
