@@ -1,134 +1,168 @@
 package com.jwtauthentication.jwtauthsecurity.service.post;
 
 import com.jwtauthentication.jwtauthsecurity.dto.post.PostDto;
-import com.jwtauthentication.jwtauthsecurity.response.PostResponse;
 import com.jwtauthentication.jwtauthsecurity.error.AppException;
+import com.jwtauthentication.jwtauthsecurity.error.BadRequestException;
 import com.jwtauthentication.jwtauthsecurity.model.Post;
+import com.jwtauthentication.jwtauthsecurity.model.User;
 import com.jwtauthentication.jwtauthsecurity.repository.PostRepository;
+import com.jwtauthentication.jwtauthsecurity.response.PostResponse;
+import com.jwtauthentication.jwtauthsecurity.service.jwt.JwtService;
+import com.jwtauthentication.jwtauthsecurity.service.user.UserService;
+import io.jsonwebtoken.JwtException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.context.i18n.LocaleContextHolder;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
-public class PostService implements PostServiceInterface {
+public class PostService implements PostServiceInterface{
 
-    @Autowired
-    private PostRepository postRepository;
+    private final PostRepository postRepository;
+    private final UserService userService;
+    private final MessageSource messageSource;
+    private final JwtService jwtService;
 
-    @Override
-    public Page<PostResponse> getAllPosts(Pageable pageable) {
-        log.info("Fetching posts with pagination");
-        try {
-            Page<Post> posts = postRepository.findAll(pageable);
-            log.info("Fetched posts: {}", posts.getContent());
-            return posts.map(this::convertToPostResponse);
-        } catch (Exception e) {
-            log.error("Error while fetching posts with pagination: {}", e.getMessage());
-            throw new AppException("Unable to fetch posts");
+    private boolean hasPermission(String requiredPermission) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return false;
         }
+
+        List<String> userPermissions = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
+
+        return userPermissions.contains(requiredPermission);
     }
 
-    @Override
-    public PostResponse getPostById(int id) {
-        log.info("Fetching post with ID: {}", id);
-        Post post = postRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("Post with ID {} not found", id);
-                    return new AppException("Post not found");
-                });
-        return convertToPostResponse(post);
-    }
 
-    @Override
     public PostResponse createPost(PostDto postDto) {
-        log.info("Creating a new post");
-        try {
-            Post post = convertToPostEntity(postDto);
-            post.setCreatedAt(LocalDateTime.now());
-            Post savedPost = postRepository.save(post);
-            log.info("Post created with ID: {}", savedPost.getId());
-            return convertToPostResponse(savedPost);
-        } catch (Exception e) {
-            log.error("Error while creating a new post: {}", e.getMessage());
-            throw new AppException("Unable to create post");
+        if (hasPermission("CREATE")) {
+            throw new AppException("Access denied. You do not have permission to create posts.");
         }
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userService.findByUsername(username);
+
+        Post post = new Post();
+        post.setText(postDto.getText());
+        post.setCreateBy(user.getFullName());
+        post.setUser(user);
+        post.setCreatedAt(LocalDateTime.now());
+
+        Post savedPost = postRepository.save(post);
+        log.info("Post created successfully with ID: {}", savedPost.getId());
+
+        return convertToPostResponse(savedPost);
     }
 
-    @Override
-    public PostResponse updatePost(PostDto postDto, int id) {
-        log.info("Updating post with ID: {}", id);
+    public PostResponse updatePost(PostDto postDto, long id) {
+        if (hasPermission("UPDATE")) {
+            throw new AppException("Access denied. You do not have permission to update posts.");
+        }
+
         Post existingPost = postRepository.findById(id)
                 .orElseThrow(() -> {
                     log.warn("Post with ID {} not found for update", id);
-                    return new AppException("Post not found");
+                    return new AppException(
+                            messageSource.getMessage("error.postnotfound", null, LocaleContextHolder.getLocale())
+                    );
                 });
 
-        existingPost.setCreateBy(postDto.getCreateBy());
-        existingPost.setUpdatedBy(postDto.getUpdatedBy());
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userService.findByUsername(username);
+
         existingPost.setText(postDto.getText());
         existingPost.setUpdatedAt(LocalDateTime.now());
+        existingPost.setUpdatedBy(user.getFullName());
 
-        try {
-            Post updatedPost = postRepository.save(existingPost);
-            log.info("Post with ID {} updated successfully", id);
-            return convertToPostResponse(updatedPost);
-        } catch (Exception e) {
-            log.error("Error while updating post with ID {}: {}", id, e.getMessage());
-            throw new AppException("Unable to update post");
+        Post updatedPost = postRepository.save(existingPost);
+        log.info("Post with ID {} updated successfully", id);
+
+        return convertToPostResponse(updatedPost);
+    }
+
+    public String deletePost(long postId, String token) {
+        if (hasPermission("DELETE")) {
+            throw new AppException("Access denied. You do not have permission to delete posts.");
+        }
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new BadRequestException(
+                        messageSource.getMessage("error.postnotfound", null, LocaleContextHolder.getLocale())
+                ));
+
+        Object rolesClaim = jwtService.extractClaim(token, claims -> claims.get("roles"));
+        List<String> roles;
+        if (rolesClaim instanceof List<?>) {
+            roles = ((List<?>) rolesClaim).stream()
+                    .filter(String.class::isInstance)
+                    .map(String.class::cast)
+                    .toList();
+        } else {
+            throw new JwtException("Roles claim is not in expected format.");
+        }
+        boolean isAdmin = roles.contains("ADMIN");
+
+        if (isAdmin) {
+            postRepository.delete(post);
+            log.info("Post with ID {} deleted successfully", postId);
+            return messageSource.getMessage("success.postdeleted", null, LocaleContextHolder.getLocale());
+        }
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User authenticatedUser = userService.findByUsername(username);
+        if (post.getUser().getUserId() == authenticatedUser.getUserId()) {
+            postRepository.delete(post);
+            log.info("Post with ID {} deleted successfully by user", postId);
+            return messageSource.getMessage("success.postdeleted", null, LocaleContextHolder.getLocale());
+        }else {
+            log.warn("User {} is not authorized to delete post {}", authenticatedUser.getUserId(), postId);
+            throw new AppException(
+                    messageSource.getMessage("error.accessdenied", null, LocaleContextHolder.getLocale())
+            );
         }
     }
 
-    @Override
-    public String deletePost(int id) {
-        log.info("Attempting to delete post with ID: {}", id);
-        if (!postRepository.existsById(id)) {
-            log.warn("Post with ID {} not found for deletion", id);
-            throw new AppException("Post not found");
+    public Page<PostResponse> getAllPosts(Pageable pageable) {
+        if (hasPermission("READ")) {
+            throw new AppException("Access denied. You do not have permission to view posts.");
         }
-        try {
-            postRepository.deleteById(id);
-            log.info("Post with ID {} deleted successfully", id);
-            return "Post deleted successfully.";
-        } catch (Exception e) {
-            log.error("Error while deleting post with ID {}: {}", id, e.getMessage());
-            throw new AppException("Unable to delete post");
-        }
+        return postRepository.findAll(pageable).map(this::convertToPostResponse);
+    }
+
+
+    public PostResponse getPostById(long id) {
+        log.info("Fetching post with ID: {}", id);
+
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new AppException(
+                        messageSource.getMessage("error.postnotfound", null, LocaleContextHolder.getLocale())
+                ));
+
+        return convertToPostResponse(post);
     }
 
     private PostResponse convertToPostResponse(Post post) {
-        PostResponse response = new PostResponse();
-        response.setId(post.getId());
-        response.setCreateBy(post.getCreateBy());
-        response.setCreatedAt(post.getCreatedAt());
-        response.setText(post.getText());
-        response.setUpdatedAt(post.getUpdatedAt());
-        response.setUpdatedBy(post.getUpdatedBy());
-        return response;
-    }
-
-    private Post convertToPostEntity(PostDto dto) {
-        Post post = new Post();
-        post.setCreateBy(dto.getCreateBy());
-        post.setUpdatedBy(dto.getUpdatedBy());
-        post.setText(dto.getText());
-        post.setUpdatedAt(dto.getUpdatedAt());
-        return post;
-    }
-
-    public String getAuthenticatedUsername() {
-      Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof UserDetails) {
-            return ((UserDetails) principal).getUsername();
-        } else {
-            return principal.toString();
-        }
+        return new PostResponse(
+                post.getId(),
+                post.getCreateBy(),
+                post.getUpdatedBy(),
+                post.getText(),
+                post.getCreatedAt(),
+                post.getUpdatedAt()
+        );
     }
 }
-

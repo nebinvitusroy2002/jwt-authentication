@@ -1,9 +1,9 @@
 package com.jwtauthentication.jwtauthsecurity.repository;
 
-import com.jwtauthentication.jwtauthsecurity.model.Post;
+import com.jwtauthentication.jwtauthsecurity.model.Permission;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface PostRepository extends JpaRepository<Post,Long> {
+public interface PermissionRepository extends JpaRepository<Permission,Long> {
 }

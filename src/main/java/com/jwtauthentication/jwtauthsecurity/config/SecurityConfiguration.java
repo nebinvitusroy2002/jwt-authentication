@@ -33,8 +33,9 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth->auth
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/roles/**").hasAuthority("ADMIN")
                         .requestMatchers("/upload/**","/download/**").authenticated()
-                        .requestMatchers("/crud/**").authenticated()
+                        .requestMatchers("/post/**").hasAnyRole("USER","ADMIN")
                         .requestMatchers("/users/me","/users/").authenticated()
                         .anyRequest().authenticated())
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
